@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #ffffff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .axis text {
+      fill: rgba(0, 0, 0, 0.6);
+    }
+
+    .axis path, .axis line {
+      stroke: rgba(0, 0, 0, 0.15);
+    }
+
+    .bar:hover {
+      opacity: 0.8;
+      cursor: pointer;
+    }
+
+    #tooltip {
+      position: fixed;
+      background: #ffffff;
+      border: 0.5px solid #ddd;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      pointer-events: none;
+      display: none;
+      color: #333;
+    }
+
+    #legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.7);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <div id="legend"></div>
+    <svg width="1000" height="500"></svg>
+    <div id="tooltip"></div>
+  </div>
+
+  <script>
+    const eras = ["2010-2013", "2014-2018", "2019-2022", "2022-2025"];
+
+    const genres = [
+      { genre: "UK Hip-Hop / Grime", color: "#4361ee", gradient: ["#4361ee", "#4cc9f0"], values: [34, 22, 70, 33] },
+      { genre: "US Hip-Hop",         color: "#f72585", gradient: ["#f72585", "#ff9e00"], values: [22, 11,  0, 22] },
+      { genre: "Afrobeats",          color: "#2dc653", gradient: ["#2dc653", "#a8ff78"], values: [0,  45,  0, 11] },
+      { genre: "R&B / Soul",         color: "#7209b7", gradient: ["#7209b7", "#c77dff"], values: [22, 11, 10,  0] },
+      { genre: "Urban Pop",          color: "#ff9e00", gradient: ["#ff9e00", "#ffdd57"], values: [22, 11, 20, 23] },
+      { genre: "Other",              color: "#888780", gradient: ["#555555", "#aaaaaa"], values: [0,   0,  0, 11] },
+    ];
+
+    const svg    = d3.select("svg");
+    const width  = 1000;
+    const height = 500;
+    const margin = { top: 20, right: 20, bottom: 80, left: 46 };
+    const innerWidth  = width  - margin.left - margin.right;
+    const innerHeight = height - margin.top  - margin.bottom;
+
+    const defs = svg.append("defs");
+
+    genres.forEach((genre, i) => {
+      const grad = defs.append("linearGradient")
+        .attr("id", `grad${i}`)
+        .attr("x1", "0%").attr("y1", "100%")
+        .attr("x2", "0%").attr("y2", "0%");
+      grad.append("stop").attr("offset", "0%").attr("stop-color", genre.gradient[0]);
+      grad.append("stop").attr("offset", "100%").attr("stop-color", genre.gradient[1]);
+    });
+
+    const keys   = genres.map(g => g.genre);
+    const colors = Object.fromEntries(genres.map((g, i) => [g.genre, `url(#grad${i})`]));
+
+    const data = eras.map((era, ix) => {
+      const row = { era };
+      genres.forEach(g => { row[g.genre] = g.values[ix]; });
+      return row;
+    });
+
+    let g = svg.append("g")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    const x = d3.scaleBand()
+      .domain(eras)
+      .range([0, innerWidth])
+      .padding(0.25);
+
+    const y = d3.scaleLinear()
+      .domain([0, 100])
+      .range([innerHeight, 0]);
+
+    const series = d3.stack()
+      .keys(keys)
+      .order(d3.stackOrderNone)
+      .offset(d3.stackOffsetNone)
+      (data);
+
+    g.append("g")
+      .attr("class", "grid")
+      .call(d3.axisLeft(y).ticks(5).tickSize(-innerWidth).tickFormat(""))
+      .call(g => g.selectAll("line")
+        .attr("stroke", "rgba(0,0,0,0.05)"));
+
+    g.append("g")
+      .attr("class", "axis")
+      .attr("transform", `translate(0,${innerHeight})`)
+      .call(d3.axisBottom(x).tickSizeOuter(0))
+      .call(g => g.selectAll("text")
+        .attr("fill", "rgba(0, 0, 0, 0.7)")
+        .attr("dy", "1.4em"));
+
+    g.append("g")
+      .attr("class", "axis")
+      .call(d3.axisLeft(y).ticks(5).tickFormat(d => d + "%"));
+
+    const tooltip = d3.select("#tooltip");
+
+    g.selectAll("g.layer")
+      .data(series)
+      .join("g")
+        .attr("class", "layer")
+        .attr("fill", d => colors[d.key])
+      .selectAll("rect")
+      .data(d => d)
+      .join("rect")
+        .attr("class", "bar")
+        .attr("x",     d => x(d.data.era))
+        .attr("width", x.bandwidth())
+        .attr("rx", 2)
+        .attr("y",      d => y(d[0]))
+        .attr("height", 0)
+        .transition()
+        .duration(900)
+        .delay((d, i) => i * 120)
+        .ease(d3.easeCubicOut)
+        .attr("y",      d => y(d[1]))
+        .attr("height", d => y(d[0]) - y(d[1]));
+
+    g.selectAll("g.layer")
+      .selectAll("rect")
+      .on("mousemove", function(event, d) {
+        const genre = d3.select(this.parentNode).datum().key;
+        const value = d[1] - d[0];
+        tooltip
+          .style("display", "block")
+          .style("left",  (event.clientX + 14) + "px")
+          .style("top",   (event.clientY - 10) + "px")
+          .html(`<strong>${genre}</strong><br>${d.data.era}: ${value}%`);
+      })
+      .on("mouseleave", () => tooltip.style("display", "none"));
+
+    d3.select("#legend").selectAll("div")
+      .data(genres)
+      .join("div")
+        .attr("class", "legend-item")
+        .html(d => `<span class="swatch" style="background:${d.color}"></span>${d.genre}`);
+  </script>
+</body>
+</html>
