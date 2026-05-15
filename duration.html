@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #fff6f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Space Mono', monospace;
+    }
+
+    svg text {
+      font-family: 'Space Mono', monospace;
+    }
+
+    .bar {
+      transition: filter 0.2s ease;
+      cursor: pointer;
+    }
+
+    .bar:hover {
+      filter: brightness(1.4) drop-shadow(0 0 12px currentColor);
+    }
+
+    .label {
+      opacity: 0;
+      animation: fadeUp 0.4s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="chart-wrap">
+    <svg width="800" height="420"></svg>
+  </div>
+
+  <script>
+    const data = [
+      { era: "2010–2013", duration: 233 },
+      { era: "2014–2018", duration: 216 },
+      { era: "2019–2022", duration: 198 },
+      { era: "2023–2025", duration: 192 }
+    ];
+
+    const width        = 800;
+    const height       = 420;
+    const marginTop    = 60;
+    const marginRight  = 30;
+    const marginBottom = 60;
+    const marginLeft   = 70;
+
+    const svg = d3.select("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    const defs = svg.append("defs");
+
+    const gradientColors = [
+      ["#4cc9f0", "#4361ee"],
+      ["#4361ee", "#3a0ca3"],
+      ["#7209b7", "#3a0ca3"],
+      ["#f72585", "#7209b7"]
+    ];
+
+    gradientColors.forEach(([start, end], i) => {
+      const grad = defs.append("linearGradient")
+        .attr("id", `grad${i}`)
+        .attr("x1", "0%").attr("y1", "100%")
+        .attr("x2", "0%").attr("y2", "0%");
+      grad.append("stop").attr("offset", "0%").attr("stop-color", start);
+      grad.append("stop").attr("offset", "100%").attr("stop-color", end);
+    });
+
+    const filter = defs.append("filter").attr("id", "glow");
+    filter.append("feGaussianBlur").attr("stdDeviation", "4").attr("result", "coloredBlur");
+    const feMerge = filter.append("feMerge");
+    feMerge.append("feMergeNode").attr("in", "coloredBlur");
+    feMerge.append("feMergeNode").attr("in", "SourceGraphic");
+
+    const x = d3.scaleBand()
+      .domain(data.map(d => d.era))
+      .range([marginLeft, width - marginRight])
+      .padding(0.35);
+
+    const y = d3.scaleLinear()
+      .domain([180, 240])
+      .nice()
+      .range([height - marginBottom, marginTop]);
+
+    svg.append("g")
+      .selectAll("line")
+      .data(y.ticks(5))
+      .join("line")
+      .attr("x1", marginLeft)
+      .attr("x2", width - marginRight)
+      .attr("y1", d => y(d))
+      .attr("y2", d => y(d))
+      .attr("stroke", "rgba(0, 0, 0, 0.05)")
+      .attr("stroke-dasharray", "4,4");
+
+    svg.append("g")
+      .selectAll("rect")
+      .data(data)
+      .join("rect")
+      .attr("class", "bar")
+      .attr("x", d => x(d.era))
+      .attr("width", x.bandwidth())
+      .attr("rx", 8)
+      .attr("fill", (d, i) => `url(#grad${i})`)
+      .attr("filter", "url(#glow)")
+      .attr("y", y(180))
+      .attr("height", 0)
+      .transition()
+      .duration(900)
+      .delay((d, i) => i * 120)
+      .ease(d3.easeCubicOut)
+      .attr("y", d => y(d.duration))
+      .attr("height", d => y(180) - y(d.duration));
+
+    svg.append("g")
+      .selectAll("text")
+      .data(data)
+      .join("text")
+      .attr("class", "label")
+      .attr("x", d => x(d.era) + x.bandwidth() / 2)
+      .attr("y", d => y(d.duration) - 12)
+      .attr("text-anchor", "middle")
+      .attr("fill", "black")
+      .attr("font-size", "13px")
+      .attr("letter-spacing", "0.05em")
+      .style("animation-delay", (d, i) => `${0.5 + i * 0.12}s`)
+      .text(d => `${d.duration}s`);
+
+    svg.append("g")
+      .attr("transform", `translate(0,${height - marginBottom})`)
+      .call(d3.axisBottom(x).tickSize(0))
+      .call(g => g.select(".domain").attr("stroke", "rgba(0, 0, 0, 0.15)"))
+      .call(g => g.selectAll("text")
+        .attr("fill", "rgba(0, 0, 0, 0.6)")
+        .attr("font-size", "12px")
+        .attr("font-family", "Space Mono, monospace")
+        .attr("dy", "1.4em"));
+
+    svg.append("g")
+      .attr("transform", `translate(${marginLeft},0)`)
+      .call(d3.axisLeft(y).ticks(5).tickFormat(d => `${d}s`))
+      .call(g => g.select(".domain").remove())
+      .call(g => g.selectAll(".tick line").attr("stroke", "rgba(0,0,0,0.1)"))
+      .call(g => g.selectAll("text")
+        .attr("fill", "rgba(0, 0, 0, 0.4)")
+        .attr("font-size", "11px")
+        .attr("font-family", "Space Mono, monospace"));
+
+    svg.append("text")
+      .attr("x", width / 2)
+      .attr("y", 28)
+      .attr("text-anchor", "middle")
+      .attr("fill", "black")
+      .attr("font-size", "15px")
+      .attr("letter-spacing", "0.12em")
+      .attr("font-family", "Space Mono, monospace")
+      .text("AVERAGE SONG DURATION BY ERA");
+
+    svg.append("text")
+      .attr("x", width / 2)
+      .attr("y", 46)
+      .attr("text-anchor", "middle")
+      .attr("fill", "rgba(0, 0, 0, 0.3)")
+      .attr("font-size", "10px")
+      .attr("letter-spacing", "0.08em")
+      .attr("font-family", "Space Mono, monospace")
+      .text("The Evolution Of The Duration of Songs Over The Years");
+  </script>
+</body>
+</html>
