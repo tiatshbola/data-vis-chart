@@ -4,22 +4,20 @@
   <meta charset="utf-8">
   <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://d3js.org/d3.v7.min.js"></script>
-
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
 
     body {
       background: #fff6f6;
       display: flex;
       justify-content: center;
       align-items: center;
-      min-height: 100vh;
       font-family: 'Space Mono', monospace;
     }
 
-    svg text {
-      font-family: 'Space Mono', monospace;
-    }
+    svg { display: block; }
+    svg text { font-family: 'Space Mono', monospace; }
 
     .bar {
       transition: filter 0.2s ease;
@@ -41,11 +39,9 @@
     }
   </style>
 </head>
-
 <body>
-  <div class="chart-wrap">
-    <svg width="800" height="420"></svg>
-  </div>
+
+  <svg></svg>
 
   <script>
     const data = [
@@ -55,12 +51,12 @@
       { era: "2023–2025", duration: 192 }
     ];
 
-    const width        = 800;
-    const height       = 420;
-    const marginTop    = 60;
-    const marginRight  = 30;
-    const marginBottom = 60;
-    const marginLeft   = 70;
+    const width        = window.innerWidth;
+    const height       = window.innerHeight;
+    const marginTop    = 80;
+    const marginRight  = 60;
+    const marginBottom = 80;
+    const marginLeft   = 90;
 
     const svg = d3.select("svg")
       .attr("width", width)
@@ -139,7 +135,7 @@
       .attr("y", d => y(d.duration) - 12)
       .attr("text-anchor", "middle")
       .attr("fill", "black")
-      .attr("font-size", "13px")
+      .attr("font-size", "16px")
       .attr("letter-spacing", "0.05em")
       .style("animation-delay", (d, i) => `${0.5 + i * 0.12}s`)
       .text(d => `${d.duration}s`);
@@ -150,7 +146,7 @@
       .call(g => g.select(".domain").attr("stroke", "rgba(0, 0, 0, 0.15)"))
       .call(g => g.selectAll("text")
         .attr("fill", "rgba(0, 0, 0, 0.6)")
-        .attr("font-size", "12px")
+        .attr("font-size", "14px")
         .attr("font-family", "Space Mono, monospace")
         .attr("dy", "1.4em"));
 
@@ -161,25 +157,25 @@
       .call(g => g.selectAll(".tick line").attr("stroke", "rgba(0,0,0,0.1)"))
       .call(g => g.selectAll("text")
         .attr("fill", "rgba(0, 0, 0, 0.4)")
-        .attr("font-size", "11px")
+        .attr("font-size", "13px")
         .attr("font-family", "Space Mono, monospace"));
 
     svg.append("text")
       .attr("x", width / 2)
-      .attr("y", 28)
+      .attr("y", 35)
       .attr("text-anchor", "middle")
       .attr("fill", "black")
-      .attr("font-size", "15px")
+      .attr("font-size", "18px")
       .attr("letter-spacing", "0.12em")
       .attr("font-family", "Space Mono, monospace")
       .text("AVERAGE SONG DURATION BY ERA");
 
     svg.append("text")
       .attr("x", width / 2)
-      .attr("y", 46)
+      .attr("y", 55)
       .attr("text-anchor", "middle")
       .attr("fill", "rgba(0, 0, 0, 0.3)")
-      .attr("font-size", "10px")
+      .attr("font-size", "12px")
       .attr("letter-spacing", "0.08em")
       .attr("font-family", "Space Mono, monospace")
       .text("The Evolution Of The Duration of Songs Over The Years");
