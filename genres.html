@@ -47,7 +47,7 @@
 <body>
   <div>
     <div id="legend"></div>
-    <svg width="900" height="600"></svg>
+    <svg id="chart"></svg>
     <div id="tooltip"></div>
   </div>
 
@@ -63,10 +63,16 @@
       { genre: "Other",              color: "#888780", gradient: ["#555555", "#aaaaaa"], values: [0,   0,  0, 11] },
     ];
 
- const svg    = d3.select("svg");
-const width  = 900;
-const height = 600;
-const margin = { top: 20, right: 20, bottom: 50, left: 46 };
+    // ONE place where size is defined — no mismatch possible
+    const width  = 900;
+    const height = 520;
+    const margin = { top: 20, right: 20, bottom: 50, left: 50 };
+    const innerWidth  = width  - margin.left - margin.right;
+    const innerHeight = height - margin.top  - margin.bottom;
+
+    const svg = d3.select("#chart")
+      .attr("width", width)
+      .attr("height", height);
 
     const defs = svg.append("defs");
 
@@ -88,7 +94,7 @@ const margin = { top: 20, right: 20, bottom: 50, left: 46 };
       return row;
     });
 
-    let g = svg.append("g")
+    const g = svg.append("g")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
     const x = d3.scaleBand()
@@ -109,8 +115,7 @@ const margin = { top: 20, right: 20, bottom: 50, left: 46 };
     g.append("g")
       .attr("class", "grid")
       .call(d3.axisLeft(y).ticks(5).tickSize(-innerWidth).tickFormat(""))
-      .call(g => g.selectAll("line")
-        .attr("stroke", "rgba(0,0,0,0.05)"));
+      .call(g => g.selectAll("line").attr("stroke", "rgba(0,0,0,0.05)"));
 
     g.append("g")
       .attr("class", "axis")
