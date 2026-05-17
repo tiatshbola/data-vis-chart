@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -13,7 +14,10 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      font-family: 'Space Mono', monospace;
     }
+
+    svg text { font-family: 'Space Mono', monospace; }
 
     .axis text { fill: rgba(0, 0, 0, 0.6); }
     .axis path, .axis line { stroke: rgba(0, 0, 0, 0.15); }
@@ -63,9 +67,8 @@
       { genre: "Other",              color: "#888780", gradient: ["#555555", "#aaaaaa"], values: [0,   0,  0, 11] },
     ];
 
-
-    const width  = 1300;
-const height = 720;
+    const width  = 900;
+    const height = 520;
     const margin = { top: 20, right: 20, bottom: 50, left: 50 };
     const innerWidth  = width  - margin.left - margin.right;
     const innerHeight = height - margin.top  - margin.bottom;
