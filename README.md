@@ -1,5 +1,4 @@
 # data-vis-chart
-# data-vis-charts
 
 An interactive data visualisation project exploring how the popular sounds of UK rap and R&B evolved between 2010–2025 through streaming culture, algorithms, and globalisation.
 
